@@ -6,9 +6,12 @@ Sub script():
     'helper variables
     Dim i As LongLong
     Dim OpeningPrice As Double
+    OpeningPrice = 0
     Dim ClosingPrice As Double
     Dim SolutionRow As Integer
     SolutionRow = 2
+    Dim OpeningPriceIsSet As Boolean
+    OpeningPriceIsSet = False
 
     'output/solution variables
     Dim Ticker As String
@@ -58,15 +61,35 @@ Sub script():
             
             'Add stock volume to running total
             StockVolumeTotal = StockVolumeTotal + ws.Cells(i, 7).Value
-         
+            
             
             'When turing is at first date for a given ticker
             If Ticker <> ws.Cells(i - 1, 1).Value Then
-            
-                'Grab the opening price at start of year
-                OpeningPrice = ws.Cells(i, 3).Value
+                
+                'reset open price flag
+                OpeningPriceIsSet = False
                 
             End If
+            
+            'This next block accounts for opening prices that occur as zero in the data set until a later date, see README for details
+            '
+            'if open price flag is not set
+            If OpeningPriceIsSet = False Then
+            
+                'grab the opening price at the current date
+                OpeningPrice = ws.Cells(i, 3).Value
+                
+                'if the price is not 0
+                If OpeningPrice <> 0 Then
+                
+                    'set the open price flag
+                    OpeningPriceIsSet = True
+                    
+                End If
+                
+            End If
+                
+                
             
             
             'When turing reaches the last date for a given ticker
@@ -90,9 +113,10 @@ Sub script():
                     ws.Cells(SolutionRow, 11).Interior.ColorIndex = 3
                 End If
                 
-                'Calculate PercentChange and output it to solution
+                'Calculate PercentChange and output it to solution (only if non-zero divisor)
                 If OpeningPrice <> 0 Then
                     PercentChange = (PriceChange / OpeningPrice)
+                'if non-zero divisor, set to percentchange to zero
                 Else
                     PercentChange = 0
                 End If
@@ -115,7 +139,7 @@ Sub script():
                     GreatestTotalVolume = StockVolumeTotal
                     GTVTicker = Ticker
                 End If
-                                
+                               
                 'reset total stock volume
                 StockVolumeTotal = 0
                 
@@ -133,7 +157,7 @@ Sub script():
         ws.Cells(2, 16).Value = GreatestPercentIncrease
         ws.Cells(3, 16).Value = GreatestPercentDecrease
         ws.Cells(4, 16).Value = GreatestTotalVolume
-
+        
         
         'Format solution percentage column
         ws.Range("K2:K" & (SolutionRow - 1)).NumberFormat = "0.00%"
@@ -156,3 +180,4 @@ Sub script():
     Next ws
     
 End Sub
+
